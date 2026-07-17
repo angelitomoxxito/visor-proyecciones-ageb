@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Proyecciones de matrícula por AGEB</title>
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <header class="topbar">
+    <div>
+      <h1>Proyecciones de matrícula por AGEB</h1>
+      <p>Ciudad de México · Ciclos 2024-2025 a 2035-2036</p>
+    </div>
+  </header>
+
+  <main>
+    <aside class="panel">
+      <section>
+        <label for="yearSlider">Ciclo escolar</label>
+        <div class="year-row">
+          <input id="yearSlider" type="range" min="0" max="11" value="0" step="1">
+          <strong id="yearLabel">2024-2025</strong>
+        </div>
+      </section>
+
+      <section class="stats">
+        <article><span>Matrícula mostrada</span><strong id="totalMatricula">—</strong></article>
+        <article><span>AGEB con escuelas</span><strong id="agebConEscuelas">—</strong></article>
+        <article><span>Escuelas</span><strong id="totalEscuelas">—</strong></article>
+        <article><span>Cambio desde 2024-2025</span><strong id="cambioTotal">—</strong></article>
+      </section>
+
+      <section>
+        <label for="filterSchools">Mostrar</label>
+        <select id="filterSchools">
+          <option value="all">Todos los AGEB</option>
+          <option value="with">Solo AGEB con escuelas</option>
+          <option value="without">Solo AGEB sin escuelas</option>
+        </select>
+      </section>
+
+      <section class="legend-wrap">
+        <h2>Leyenda</h2>
+        <div id="legend"></div>
+      </section>
+    </aside>
+
+    <div id="map"></div>
+  </main>
+
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <script src="script.js"></script>
+</body>
+</html>
