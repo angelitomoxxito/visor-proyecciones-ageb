@@ -1,56 +1,11 @@
-<!DOCTYPE html>
-<html lang="es">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Proyecciones de matrícula por AGEB</title>
-  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
-  <link rel="stylesheet" href="styles.css">
-</head>
-<body>
-  <header class="topbar">
-    <div>
-      <h1>Proyecciones de matrícula por AGEB</h1>
-      <p>Ciudad de México · Ciclos 2024-2025 a 2035-2036</p>
-    </div>
-  </header>
-
-  <main>
-    <aside class="panel">
-      <section>
-        <label for="yearSlider">Ciclo escolar</label>
-        <div class="year-row">
-          <input id="yearSlider" type="range" min="0" max="11" value="0" step="1">
-          <strong id="yearLabel">2024-2025</strong>
-        </div>
-      </section>
-
-      <section class="stats">
-        <article><span>Matrícula mostrada</span><strong id="totalMatricula">—</strong></article>
-        <article><span>AGEB con escuelas</span><strong id="agebConEscuelas">—</strong></article>
-        <article><span>Escuelas</span><strong id="totalEscuelas">—</strong></article>
-        <article><span>Cambio desde 2024-2025</span><strong id="cambioTotal">—</strong></article>
-      </section>
-
-      <section>
-        <label for="filterSchools">Mostrar</label>
-        <select id="filterSchools">
-          <option value="all">Todos los AGEB</option>
-          <option value="with">Solo AGEB con escuelas</option>
-          <option value="without">Solo AGEB sin escuelas</option>
-        </select>
-      </section>
-
-      <section class="legend-wrap">
-        <h2>Leyenda</h2>
-        <div id="legend"></div>
-      </section>
-    </aside>
-
-    <div id="map"></div>
-  </main>
-
-  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-  <script src="script.js"></script>
-</body>
-</html>
+<!DOCTYPE html><html lang="es"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Proyecciones de matrícula</title><link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"><link rel="stylesheet" href="styles.css"></head><body>
+<header class="topbar"><div><h1>Proyecciones de matrícula</h1><p>Ciudad de México · AGEB y alcaldías · 2024-2025 a 2035-2036</p></div><button id="panelToggle">☰ Filtros</button></header>
+<main><aside class="panel" id="panel">
+<details open><summary>Vista territorial</summary><div class="control"><label for="territory">Nivel de visualización</label><select id="territory"><option value="ageb">AGEB</option><option value="alcaldia">Alcaldías</option></select></div></details>
+<details open><summary>Selección de años</summary><div class="control"><label for="yearSelect">Ciclo escolar</label><select id="yearSelect"></select></div><input id="yearSlider" type="range" min="0" max="11" value="0"></details>
+<details open><summary>Simbología</summary><div class="control"><label for="variable">Variable mostrada</label><select id="variable"><option value="total">Matrícula total</option><option value="percent">Variación porcentual desde 2024-2025</option></select></div><div class="control" id="schoolFilterWrap"><label for="filterSchools">Mostrar</label><select id="filterSchools"><option value="all">Todos los AGEB</option><option value="with">Solo AGEB con escuelas</option><option value="without">Solo AGEB sin escuelas</option></select></div></details>
+<section class="stats"><article><span>Matrícula mostrada</span><strong id="totalMatricula">—</strong></article><article><span id="unitsLabel">AGEB con escuelas</span><strong id="unitsCount">—</strong></article><article><span>Escuelas</span><strong id="totalEscuelas">—</strong></article><article><span>Cambio desde 2024-2025</span><strong id="cambioTotal">—</strong></article></section>
+<details open><summary>Leyenda</summary><div id="legend"></div></details>
+<details><summary>Descargar bases</summary><div class="downloads"><a href="data/base_matriculas_totales.csv" download>⬇ Matrículas totales</a><a href="data/base_tasas_crecimiento.csv" download>⬇ Tasas de crecimiento</a></div></details>
+<p class="note">Las proyecciones son estimaciones técnicas para planeación y no sustituyen cifras oficiales.</p>
+</aside><div id="map"></div></main><script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script><script src="script.js"></script></body></html>

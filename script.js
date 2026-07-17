@@ -1,145 +1,17 @@
-const YEARS = Array.from({length: 12}, (_, i) => {
-  const start = 2024 + i;
-  return { label: `${start}-${start + 1}`, field: `mat_${start}_${start + 1}` };
-});
-
-const map = L.map('map', { zoomControl: true }).setView([19.36, -99.13], 10);
-
-L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-  maxZoom: 19,
-  attribution: '&copy; OpenStreetMap'
-}).addTo(map);
-
-let agebData;
-let agebLayer;
-let currentIndex = 0;
-let currentFilter = 'all';
-
-const slider = document.getElementById('yearSlider');
-const yearLabel = document.getElementById('yearLabel');
-const filterSchools = document.getElementById('filterSchools');
-
-function valueOf(feature) {
-  return Number(feature.properties[YEARS[currentIndex].field] || 0);
-}
-
-function getBreaks(values) {
-  const positive = values.filter(v => v > 0).sort((a,b) => a-b);
-  if (!positive.length) return [0, 1, 2, 3, 4];
-  const q = p => positive[Math.min(positive.length - 1, Math.floor((positive.length - 1) * p))];
-  return [q(.2), q(.4), q(.6), q(.8), positive[positive.length - 1]];
-}
-
-function palette(value, breaks) {
-  if (value <= 0) return '#e5e7eb';
-  if (value <= breaks[0]) return '#ffffcc';
-  if (value <= breaks[1]) return '#c2e699';
-  if (value <= breaks[2]) return '#78c679';
-  if (value <= breaks[3]) return '#31a354';
-  return '#006837';
-}
-
-function isVisible(feature) {
-  const n = Number(feature.properties.num_escuelas || 0);
-  if (currentFilter === 'with') return n > 0;
-  if (currentFilter === 'without') return n === 0;
-  return true;
-}
-
-function render() {
-  if (agebLayer) map.removeLayer(agebLayer);
-
-  const visible = agebData.features.filter(isVisible);
-  const breaks = getBreaks(visible.map(valueOf));
-
-  agebLayer = L.geoJSON(
-    { type: 'FeatureCollection', features: visible },
-    {
-      style: feature => ({
-        color: '#475569',
-        weight: .55,
-        fillColor: palette(valueOf(feature), breaks),
-        fillOpacity: .72
-      }),
-      onEachFeature: (feature, layer) => {
-        layer.on({
-          mouseover: e => e.target.setStyle({weight: 2, color: '#111827', fillOpacity: .88}),
-          mouseout: e => agebLayer.resetStyle(e.target)
-        });
-        layer.bindPopup(() => popupHtml(feature));
-      }
-    }
-  ).addTo(map);
-
-  updateStats(visible);
-  updateLegend(breaks);
-}
-
-function popupHtml(feature) {
-  const p = feature.properties;
-  const current = Number(p[YEARS[currentIndex].field] || 0);
-  const base = Number(p.mat_2024_2025 || 0);
-  const change = base ? ((current - base) / base) * 100 : 0;
-  return `
-    <div class="popup-title">AGEB ${p.CVE_AGEB}</div>
-    <div class="popup-grid">
-      <span>CVEGEO:</span><strong>${p.CVEGEO}</strong>
-      <span>Ciclo:</span><strong>${YEARS[currentIndex].label}</strong>
-      <span>Matrícula:</span><strong>${current.toLocaleString('es-MX')}</strong>
-      <span>Escuelas:</span><strong>${Number(p.num_escuelas || 0).toLocaleString('es-MX')}</strong>
-      <span>Cambio:</span><strong>${change.toFixed(1)}%</strong>
-    </div>`;
-}
-
-function updateStats(features) {
-  const total = features.reduce((s, f) => s + valueOf(f), 0);
-  const base = features.reduce((s, f) => s + Number(f.properties.mat_2024_2025 || 0), 0);
-  const schools = features.reduce((s, f) => s + Number(f.properties.num_escuelas || 0), 0);
-  const withSchools = features.filter(f => Number(f.properties.num_escuelas || 0) > 0).length;
-  const change = base ? ((total - base) / base) * 100 : 0;
-
-  document.getElementById('totalMatricula').textContent = total.toLocaleString('es-MX');
-  document.getElementById('agebConEscuelas').textContent = withSchools.toLocaleString('es-MX');
-  document.getElementById('totalEscuelas').textContent = schools.toLocaleString('es-MX');
-  document.getElementById('cambioTotal').textContent = `${change.toFixed(1)}%`;
-}
-
-function updateLegend(breaks) {
-  const labels = [
-    ['Sin matrícula', 0],
-    [`1 – ${breaks[0].toLocaleString('es-MX')}`, 1],
-    [`${(breaks[0]+1).toLocaleString('es-MX')} – ${breaks[1].toLocaleString('es-MX')}`, breaks[0]+1],
-    [`${(breaks[1]+1).toLocaleString('es-MX')} – ${breaks[2].toLocaleString('es-MX')}`, breaks[1]+1],
-    [`${(breaks[2]+1).toLocaleString('es-MX')} – ${breaks[3].toLocaleString('es-MX')}`, breaks[2]+1],
-    [`Más de ${breaks[3].toLocaleString('es-MX')}`, breaks[4]]
-  ];
-  document.getElementById('legend').innerHTML = labels.map(([label, sample]) =>
-    `<div class="legend-item"><span class="legend-color" style="background:${palette(sample, breaks)}"></span>${label}</div>`
-  ).join('');
-}
-
-slider.addEventListener('input', e => {
-  currentIndex = Number(e.target.value);
-  yearLabel.textContent = YEARS[currentIndex].label;
-  render();
-});
-
-filterSchools.addEventListener('change', e => {
-  currentFilter = e.target.value;
-  render();
-});
-
-fetch('data/ageb_proyecciones.json')
-  .then(r => {
-    if (!r.ok) throw new Error('No se pudo cargar el GeoJSON.');
-    return r.json();
-  })
-  .then(data => {
-    agebData = data;
-    render();
-    map.fitBounds(L.geoJSON(agebData).getBounds(), {padding: [10,10]});
-  })
-  .catch(err => {
-    console.error(err);
-    alert('No se pudo cargar el archivo data/ageb_proyecciones.json');
-  });
+const YEARS=Array.from({length:12},(_,i)=>{const y=2024+i;return{label:`${y}-${y+1}`,field:`mat_${y}_${y+1}`}});
+const map=L.map('map').setView([19.36,-99.13],10);L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:19,attribution:'&copy; OpenStreetMap'}).addTo(map);
+let agebData,alcaldiaData,schools=[],layer,currentIndex=0,currentTerritory='ageb',currentVariable='total',currentFilter='all';
+const $=id=>document.getElementById(id);YEARS.forEach((y,i)=>$('yearSelect').insertAdjacentHTML('beforeend',`<option value="${i}">${y.label}</option>`));
+function n(v){return Number(v)||0}function pct(cur,base){return base?((cur-base)/base)*100:null}function currentValue(f){const p=f.properties,cur=n(p[YEARS[currentIndex].field]);return currentVariable==='total'?cur:pct(cur,n(p.mat_2024_2025))}
+function visible(f){if(currentTerritory!=='ageb')return true;const k=n(f.properties.num_escuelas);return currentFilter==='with'?k>0:currentFilter==='without'?k===0:true}
+function quantiles(vals){const a=vals.filter(v=>v!=null&&v>0).sort((x,y)=>x-y);if(!a.length)return[1,2,3,4];const q=p=>a[Math.floor((a.length-1)*p)];return[q(.2),q(.4),q(.6),q(.8)]}
+function totalColor(v,b){if(v<=0)return'#e5e7eb';if(v<=b[0])return'#eff3ff';if(v<=b[1])return'#bdd7e7';if(v<=b[2])return'#6baed6';if(v<=b[3])return'#3182bd';return'#08519c'}
+function pctColor(v){if(v==null)return'#e5e7eb';if(v<-20)return'#8b0000';if(v<-10)return'#d73027';if(v<-2)return'#fc8d59';if(v<=2)return'#f1f1f1';if(v<=10)return'#a6dba0';if(v<=20)return'#5aae61';return'#1b7837'}
+function enrichAlcaldias(){const agg={};agebData.features.forEach(f=>{const m=String(f.properties.CVE_MUN||'').padStart(3,'0');if(!agg[m])agg[m]={num_escuelas:0};agg[m].num_escuelas+=n(f.properties.num_escuelas);YEARS.forEach(y=>agg[m][y.field]=(agg[m][y.field]||0)+n(f.properties[y.field]))});alcaldiaData.features.forEach(f=>Object.assign(f.properties,agg[String(f.properties.CVE_MUN||'').padStart(3,'0')]||{num_escuelas:0}))}
+function schoolList(cve,mun){return schools.filter(s=>currentTerritory==='ageb'?s.cvegeo===cve:String(s.cvegeo||'').slice(2,5)===mun)}
+function popup(f){const p=f.properties,cur=n(p[YEARS[currentIndex].field]),base=n(p.mat_2024_2025),change=pct(cur,base),mun=String(p.CVE_MUN||'').padStart(3,'0'),list=schoolList(p.CVEGEO,mun);const title=currentTerritory==='ageb'?`AGEB ${p.CVE_AGEB||''}`:p.NOMGEO;const shown=list.slice(0,30).map(s=>`<div class="popup-school"><strong>${s.nombre||'Sin nombre'}</strong>${s.cct||'Sin CCT'} · ${s.nivel||'Sin nivel'} · ${n(s[YEARS[currentIndex].field]).toLocaleString('es-MX')} alumnos</div>`).join('');return`<div class="popup-title">${title}</div><div class="popup-grid"><span>Clave:</span><strong>${p.CVEGEO||mun}</strong><span>Ciclo:</span><strong>${YEARS[currentIndex].label}</strong><span>Matrícula:</span><strong>${cur.toLocaleString('es-MX')}</strong><span>Escuelas:</span><strong>${n(p.num_escuelas).toLocaleString('es-MX')}</strong><span>Cambio:</span><strong>${change==null?'No calculable':change.toFixed(1)+'%'}</strong><span>Base 2024-2025:</span><strong>${base.toLocaleString('es-MX')}</strong><span>Final 2035-2036:</span><strong>${n(p.mat_2035_2036).toLocaleString('es-MX')}</strong></div><div class="popup-schools"><strong>Escuelas en el área (${list.length})</strong>${shown}${list.length>30?`<div class="popup-note">Se muestran 30 de ${list.length} escuelas.</div>`:''}</div>`}
+function render(){if(layer)map.removeLayer(layer);const data=currentTerritory==='ageb'?agebData:alcaldiaData,features=data.features.filter(visible),breaks=quantiles(features.map(currentValue));layer=L.geoJSON({type:'FeatureCollection',features},{style:f=>({color:'#475569',weight:currentTerritory==='ageb'?.55:1.4,fillColor:currentVariable==='total'?totalColor(currentValue(f),breaks):pctColor(currentValue(f)),fillOpacity:.76}),onEachFeature:(f,l)=>{l.on({mouseover:e=>e.target.setStyle({weight:2.5,color:'#111827',fillOpacity:.9}),mouseout:e=>layer.resetStyle(e.target)});l.bindPopup(()=>popup(f),{maxWidth:420})}}).addTo(map);updateStats(features);updateLegend(breaks)}
+function updateStats(fs){const total=fs.reduce((s,f)=>s+n(f.properties[YEARS[currentIndex].field]),0),base=fs.reduce((s,f)=>s+n(f.properties.mat_2024_2025),0),sch=fs.reduce((s,f)=>s+n(f.properties.num_escuelas),0),units=currentTerritory==='ageb'?fs.filter(f=>n(f.properties.num_escuelas)>0).length:fs.length;$('totalMatricula').textContent=total.toLocaleString('es-MX');$('unitsLabel').textContent=currentTerritory==='ageb'?'AGEB con escuelas':'Alcaldías';$('unitsCount').textContent=units.toLocaleString('es-MX');$('totalEscuelas').textContent=sch.toLocaleString('es-MX');$('cambioTotal').textContent=base?`${((total-base)/base*100).toFixed(1)}%`:'No calculable'}
+function updateLegend(b){let items;if(currentVariable==='percent')items=[['Menor de -20%','#8b0000'],['-20% a -10%','#d73027'],['-10% a -2%','#fc8d59'],['Estable (-2% a 2%)','#f1f1f1'],['2% a 10%','#a6dba0'],['10% a 20%','#5aae61'],['Mayor de 20%','#1b7837'],['Sin base','#e5e7eb']];else items=[['Sin matrícula','#e5e7eb'],[`1 – ${Math.round(b[0]).toLocaleString('es-MX')}`,totalColor(1,b)],[`${Math.round(b[0]+1).toLocaleString('es-MX')} – ${Math.round(b[1]).toLocaleString('es-MX')}`,totalColor(b[0]+1,b)],[`${Math.round(b[1]+1).toLocaleString('es-MX')} – ${Math.round(b[2]).toLocaleString('es-MX')}`,totalColor(b[1]+1,b)],[`${Math.round(b[2]+1).toLocaleString('es-MX')} – ${Math.round(b[3]).toLocaleString('es-MX')}`,totalColor(b[2]+1,b)],[`Más de ${Math.round(b[3]).toLocaleString('es-MX')}`,totalColor(b[3]+1,b)]];$('legend').innerHTML=items.map(([t,c])=>`<div class="legend-item"><span class="legend-color" style="background:${c}"></span>${t}</div>`).join('')}
+$('yearSlider').oninput=e=>{$('yearSelect').value=e.target.value;currentIndex=+e.target.value;render()};$('yearSelect').onchange=e=>{$('yearSlider').value=e.target.value;currentIndex=+e.target.value;render()};$('territory').onchange=e=>{currentTerritory=e.target.value;$('schoolFilterWrap').style.display=currentTerritory==='ageb'?'block':'none';render()};$('variable').onchange=e=>{currentVariable=e.target.value;render()};$('filterSchools').onchange=e=>{currentFilter=e.target.value;render()};$('panelToggle').onclick=()=>$('panel').classList.toggle('open');
+Promise.all([fetch('data/ageb_proyecciones.json').then(r=>r.json()),fetch('data/alcaldias.json').then(r=>r.json()),fetch('data/escuelas_proyecciones.json').then(r=>r.json())]).then(([a,b,c])=>{agebData=a;alcaldiaData=b;schools=c;enrichAlcaldias();render();map.fitBounds(L.geoJSON(agebData).getBounds(),{padding:[10,10]})}).catch(e=>{console.error(e);alert('No se pudieron cargar los datos del visor. Revisa la carpeta data.')});
